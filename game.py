@@ -17,6 +17,7 @@ game_over = 0
 
 bg = pygame.image.load('img/bg.png')
 bg_img = pygame.transform.scale(bg, (800,800))
+restart_img = pygame.image.load('img/restart.png')
 
 
 class world():
@@ -53,7 +54,7 @@ class world():
                     spikes_group.add(spikes1)
                 if tile == 9:
                     img = pygame.transform.scale (barrier_img, (tile_size,tile_size))
-                    img_rectangle = img.get_rect() #change the img to rectangle
+                    img_rectangle = img.get_rect() 
                     img_rectangle.x = col_count * tile_size
                     img_rectangle.y = row_count * tile_size
                     tile = (img,img_rectangle)
@@ -65,18 +66,30 @@ class world():
         for tile in self.tile_list:
             screen.blit(tile[0], tile[1])
 
-
-class player():
-    def __init__(self, x, y):
-        img = pygame.image.load('img/character.png')
-        self.image = pygame.transform.scale(img, (28,64))
+class button():
+    def __init__(self,x,y,image):
+        self.image = image
         self.rect = self.image.get_rect()
         self.rect.x = x
         self.rect.y = y
-        self.width = self.image.get_width()
-        self.height = self.image.get_height()
-        self.vel_y = 0
-        self.jumped = False
+        self.clicked = False
+    
+    def draw(self):
+        action = False
+        pos = pygame.mouse.get_pos()
+        if self.rect.collidepoint(pos):
+            # 0 for left click 
+            if pygame.mouse.get_pressed()[0] == 1 and self.clicked == False:
+                action = True
+                self.clicked = True
+        if pygame.mouse.get_pressed()[0]==0:
+            self.clicked = False
+        screen.blit(self.image, self.rect)
+        return action
+
+class player():
+    def __init__(self, x, y):
+        self.reset(x,y)
     
     def update(self, game_over):
         dx = 0
@@ -84,7 +97,7 @@ class player():
 
         if game_over == 0:
             key = pygame.key.get_pressed()
-            if key[pygame.K_SPACE] and self.jumped == False:
+            if key[pygame.K_SPACE] and self.jumped == False and self.floating == False:
                 self.vel_y = -15
                 self.jumped = True
             if key[pygame.K_SPACE] == False:
@@ -100,6 +113,7 @@ class player():
             dy += self.vel_y
 
             
+            self.floating = True
             for tile in world1.tile_list:
                 if tile[1].colliderect(self.rect.x + dx, self.rect.y, self.width, self.height):
                     dx = 0
@@ -109,6 +123,7 @@ class player():
                         self.vel_y = 0
                     elif self.vel_y >= 0:
                         dy = tile[1].top - self.rect.bottom
+                        self.floating = False
             
             if pygame.sprite.spritecollide(self, enemy_group, False):
                 game_over = -1
@@ -119,10 +134,21 @@ class player():
             self.rect.x += dx
             self.rect.y += dy
         
-
         screen.blit(self.image, self.rect)
 
         return game_over
+
+    def reset(self,x,y):
+        img = pygame.image.load('img/character.png')
+        self.image = pygame.transform.scale(img, (28,64))
+        self.rect = self.image.get_rect()
+        self.rect.x = x
+        self.rect.y = y
+        self.width = self.image.get_width()
+        self.height = self.image.get_height()
+        self.vel_y = 0
+        self.jumped = False
+        self.floating = True
 
 class enemy(pygame.sprite.Sprite):
     def __init__(self,x,y):
@@ -171,10 +197,14 @@ world_lst = [
 ]
 
 player1 = player(100, screen_height-114)
+
 enemy_group = pygame.sprite.Group()
 spikes_group = pygame.sprite.Group()
+
+
 world1 = world(world_lst)
 
+restart_button = button(int(screen_width//2)-75, int(screen_height//2)-25, restart_img)
 
 run = True
 while run:
@@ -189,6 +219,12 @@ while run:
     spikes_group.draw(screen)
 
     game_over = player1.update(game_over)
+
+    if game_over == -1:
+        if restart_button.draw():
+            player1.reset(100, screen_height-114)
+            game_over = 0
+
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             run = False
