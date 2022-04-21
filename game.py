@@ -18,6 +18,7 @@ game_over = 0
 bg = pygame.image.load('img/bg.png')
 bg_img = pygame.transform.scale(bg, (800,800))
 restart_img = pygame.image.load('img/restart.png')
+gameover_img = pygame.image.load('img/game_over.png')
 
 
 class world():
@@ -52,6 +53,9 @@ class world():
                 if tile == 4:
                     spikes1 = spikes(col_count * tile_size, row_count * tile_size+10)
                     spikes_group.add(spikes1)
+                if tile == 5:
+                    trophy1 = trophy(col_count * tile_size, row_count * tile_size + 12)
+                    trophy_group.add(trophy1)
                 if tile == 9:
                     img = pygame.transform.scale (barrier_img, (tile_size,tile_size))
                     img_rectangle = img.get_rect() 
@@ -126,11 +130,14 @@ class player():
                         self.floating = False
             
             if pygame.sprite.spritecollide(self, enemy_group, False):
-                game_over = -1
+                game_over = 1
             
             if pygame.sprite.spritecollide(self, spikes_group, False):
                 game_over = -1
-                    
+
+            if pygame.sprite.spritecollide(self, trophy_group, False):
+                game_over = 1
+
             self.rect.x += dx
             self.rect.y += dy
         
@@ -177,10 +184,19 @@ class spikes(pygame.sprite.Sprite):
         self.rect.x = x
         self.rect.y = y 
 
+class trophy(pygame.sprite.Sprite):
+    def __init__(self,x,y):
+        pygame.sprite.Sprite.__init__(self)
+        img = pygame.image.load('img/trophy.png')
+        self.image = pygame.transform.scale(img, (tile_size, tile_size-10))
+        self.rect = self.image.get_rect()
+        self.rect.x = x
+        self.rect.y = y 
+
 world_lst = [
     [9, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9],
     [9, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9],
-    [9, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9],
+    [9, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 0, 0, 0, 9],
     [9, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 9],
     [9, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 2, 1, 0, 0, 9],
     [9, 0, 0, 0, 0, 0, 1, 1, 1, 2, 2, 2, 2, 0, 0, 9],
@@ -200,11 +216,12 @@ player1 = player(100, screen_height-114)
 
 enemy_group = pygame.sprite.Group()
 spikes_group = pygame.sprite.Group()
-
+trophy_group = pygame.sprite.Group()
 
 world1 = world(world_lst)
 
 restart_button = button(int(screen_width//2)-75, int(screen_height//2)-25, restart_img)
+gameover_button = button(int(screen_width//2)-75, int(screen_height//2)-25, gameover_img)
 
 run = True
 while run:
@@ -217,6 +234,7 @@ while run:
         enemy_group.update()
     enemy_group.draw(screen)
     spikes_group.draw(screen)
+    trophy_group.draw(screen)
 
     game_over = player1.update(game_over)
 
@@ -225,6 +243,10 @@ while run:
             player1.reset(100, screen_height-114)
             game_over = 0
 
+    if game_over == 1:
+        if gameover_button.draw():
+            run = False
+        
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             run = False
