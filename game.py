@@ -130,7 +130,7 @@ class player():
                         self.floating = False
             
             if pygame.sprite.spritecollide(self, enemy_group, False):
-                game_over = 1
+                game_over = -1
             
             if pygame.sprite.spritecollide(self, spikes_group, False):
                 game_over = -1
